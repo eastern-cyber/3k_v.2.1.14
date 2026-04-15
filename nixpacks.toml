@@ -1,0 +1,12 @@
+[phases.setup]
+nixPkgs = ["python311", "postgresql"]
+
+[phases.install]
+cmds = [
+  "pip install --upgrade pip",
+  "pip install -r requirements.txt",
+  "python manage.py collectstatic --noinput"
+]
+
+[start]
+cmd = "python manage.py migrate --noinput && gunicorn _core.wsgi:application"

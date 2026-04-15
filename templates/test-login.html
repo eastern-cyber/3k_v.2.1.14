@@ -1,0 +1,48 @@
+<!-- templates/test-login.html -->
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Debug Login Test</h2>
+    <input type="email" id="email" placeholder="Email" value="katawut.paramee@gmail.com">
+    <input type="password" id="password" placeholder="Password" value="abcd1234">
+    <button onclick="test()">Test Login</button>
+    <div id="result" style="margin-top:20px;padding:10px;background:#f0f0f0;"></div>
+    
+    <script>
+    async function test() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const result = document.getElementById('result');
+        
+        result.innerHTML = 'Testing...';
+        
+        try {
+            const response = await fetch('http://localhost:3001/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            
+            const data = await response.json();
+            result.innerHTML = `<h3>✅ Success!</h3>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+                <button onclick="storeAndRedirect()">Store & Redirect</button>`;
+            
+            window.testData = data;
+        } catch (error) {
+            result.innerHTML = `<h3>❌ Error:</h3>
+                <p>${error.message}</p>
+                <p>Check: Backend running? CORS enabled?</p>`;
+        }
+    }
+    
+    function storeAndRedirect() {
+        if (window.testData) {
+            localStorage.setItem('user_token', window.testData.token);
+            localStorage.setItem('user_data', JSON.stringify(window.testData.user));
+            window.location.href = 'https://3k214.dfi.fund/templates/home.html';
+        }
+    }
+    </script>
+</body>
+</html>

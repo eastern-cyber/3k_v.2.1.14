@@ -1,0 +1,43 @@
+<!-- test-api.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API Endpoints</title>
+</head>
+<body>
+    <h1>Test API Endpoints</h1>
+    <button onclick="testEndpoints()">Test All Endpoints</button>
+    <div id="results"></div>
+    
+    <script>
+    async function testEndpoints() {
+        const endpoints = [
+            '/api/health',
+            '/api/auth/health',
+            '/api/auth/validate-token',
+            '/api/auth/update-profile',
+            '/api/auth/change-password'
+        ];
+        
+        let results = '';
+        
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: endpoint.includes('change-password') ? 'POST' : 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                results += `<p><strong>${endpoint}:</strong> ${response.status} ${response.statusText}</p>`;
+            } catch (error) {
+                results += `<p><strong>${endpoint}:</strong> ERROR - ${error.message}</p>`;
+            }
+        }
+        
+        document.getElementById('results').innerHTML = results;
+    }
+    </script>
+</body>
+</html>

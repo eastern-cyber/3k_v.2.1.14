@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KokKokKok - Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 10px; padding: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .success { background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .user-info { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .btn { display: inline-block; padding: 10px 20px; background: #2196F3; color: white; text-decoration: none; border-radius: 5px; border: none; cursor: pointer; margin-right: 10px; margin-top: 10px; }
+        .btn:hover { background: #1976D2; }
+        .btn-logout { background: #f44336; }
+        .btn-logout:hover { background: #d32f2f; }
+        .status-box { margin-top: 30px; padding: 15px; background: #e8f4fd; border-radius: 5px; }
+        .status-online { color: #2E7D32; font-weight: bold; }
+        .status-offline { color: #d32f2f; font-weight: bold; }
+        .name-section { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        .name-edit-form { display: none; margin: 10px 0; padding: 15px; background: #fff; border-radius: 5px; border: 1px solid #ddd; }
+        .debug-info { background: #f0f8ff; border: 1px dashed #4CAF50; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 12px; font-family: monospace; }
+        .test-section { background: #fff3cd; border: 1px dashed #ff9800; padding: 10px; border-radius: 5px; margin: 15px 0; }
+        .wallet-address { font-family: monospace; word-break: break-all; }
+        
+        /* Add these styles to fix layout issues */
+        .name-edit-form {
+            max-width: 100%;
+            overflow: hidden;
+        }
+        
+        .password-strength {
+            margin-top: 5px;
+            font-size: 12px;
+            height: 5px;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .strength-0 { background: #ff4444; width: 20%; }
+        .strength-1 { background: #ff8800; width: 40%; }
+        .strength-2 { background: #ffbb33; width: 60%; }
+        .strength-3 { background: #00C851; width: 80%; }
+        .strength-4 { background: #007E33; width: 100%; }
+        
+        /* Ensure buttons don't overflow on mobile */
+        @media (max-width: 480px) {
+            .btn {
+                font-size: 14px;
+                padding: 8px 12px;
+            }
+        }
+
+        .password-requirements {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        .password-requirements ul {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+
+        .password-requirements li.valid {
+            color: #4CAF50;
+        }
+
+        .password-requirements li.invalid {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success">
+            <h1>🎉 ล็อกอินสำเร็จ!</h1>
+            <p>KokKokKok Dashboard ยินดีต้อนรับ</p>
+        </div>
+        
+        <div class="debug-info">
+            <p><strong>Debug:</strong> <span id="debugDomain"></span> | <span id="debugBackendUrl"></span></p>
+            <button onclick="testEndpoints()" class="btn" style="padding: 5px 10px; font-size: 11px; background: #ff9800;">
+                🧪 Test Endpoints
+            </button>
+            <button onclick="debugToken()" class="btn" style="padding: 5px 10px; font-size: 11px; background: #9C27B0;">
+                🔍 Debug Token
+            </button>
+        </div>
+        
+        <div class="user-info">
+            <h2>รายละเอียดสมาชิก</h2>
+            <div id="userData">
+                <p><strong>อีเมล:</strong> <span id="userEmail">Loading...</span></p>
+                
+                <div class="name-section">
+                    <p style="margin: 0;"><strong>ชื่อ:</strong> <span id="userName">Loading...</span></p>
+                    <button onclick="toggleNameEdit()" class="btn" style="padding: 4px 12px; font-size: 12px;">
+                        ✏️ แก้ไขชื่อ
+                    </button>
+                </div>
+                
+                <div id="nameEditForm" class="name-edit-form">
+                    <h3 style="margin-top: 0;">แก้ไขชื่อของท่าน</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="newNameInput" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" 
+                            placeholder="ใส่ชื่อใหม่" maxlength="100">
+                        <button onclick="saveName()" class="btn" style="padding: 8px 16px; background: #4CAF50;">
+                            💾 บันทึก
+                        </button>
+                        <button onclick="cancelNameEdit()" class="btn" style="padding: 8px 16px; background: #757575;">
+                            ❌ ยกเลิก
+                        </button>
+                    </div>
+                    <p id="nameEditMessage" style="margin: 10px 0 0 0; font-size: 14px;"></p>
+                </div>
+
+                <!-- Add this after the name edit form section -->
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                    <h3 style="margin-top: 0;">เปลี่ยนรหัสผ่าน</h3>
+                    <div id="passwordChangeForm" class="name-edit-form" style="display: none;">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">รหัสผ่านปัจจุบัน</label>
+                            <div style="position: relative; width: 100%;">
+                                <input type="password" id="currentPassword" 
+                                    style="width: 100%; padding: 8px 35px 8px 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"
+                                    placeholder="ใส่รหัสผ่านปัจจุบัน">
+                                <button type="button" onclick="togglePasswordVisibility('currentPassword', 'currentPasswordIcon')" 
+                                    style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666; width: 20px; height: 20px; padding: 0; margin: 0;">
+                                    <svg id="currentPasswordIcon" viewBox="0 0 48 48" style="width: 20px; height: 20px; fill: currentColor;">
+                                        <path d="M38.88 41.7a1 1 0 0 0 1.41 0l1.42-1.4a1 1 0 0 0 0-1.42l-3.86-3.86a24.57 24.57 0 0 0 6.27-9.69 1 1 0 0 0 0-.66C41 15.8 32.66 9 23 9c-3.27 0-6.35.73-9.12 2.05L9.12 6.29a1 1 0 0 0-1.41 0L6.29 7.71a1 1 0 0 0 0 1.41l32.59 32.59Zm-22-27.66A17.8 17.8 0 0 1 23 13c12.75 0 17 12 17 12s-1.38 3.9-4.93 7.25l-4.54-4.55A7.99 7.99 0 0 0 23 17c-.95 0-1.86.16-2.7.47l-3.43-3.43ZM1.87 24.67a24.64 24.64 0 0 1 5.8-9.23l2.77 2.78C7.25 21.46 6 25 6 25s4.25 12 17 12a18 18 0 0 0 5.42-.8l3.05 3.05A21.2 21.2 0 0 1 23 41c-9.83 0-17.93-6.63-21.13-15.67a1 1 0 0 1 0-.66Z"></path>
+                                        <path d="M15 25c0-.68.08-1.35.24-1.98l9.74 9.73A8.02 8.02 0 0 1 15 25Z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">รหัสผ่านใหม่</label>
+                            <div style="position: relative; width: 100%;">
+                                <input type="password" id="newPassword" 
+                                    style="width: 100%; padding: 8px 35px 8px 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"
+                                    placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)">
+                                <button type="button" onclick="togglePasswordVisibility('newPassword', 'newPasswordIcon')" 
+                                    style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666; width: 20px; height: 20px; padding: 0; margin: 0;">
+                                    <svg id="newPasswordIcon" viewBox="0 0 48 48" style="width: 20px; height: 20px; fill: currentColor;">
+                                        <path d="M38.88 41.7a1 1 0 0 0 1.41 0l1.42-1.4a1 1 0 0 0 0-1.42l-3.86-3.86a24.57 24.57 0 0 0 6.27-9.69 1 1 0 0 0 0-.66C41 15.8 32.66 9 23 9c-3.27 0-6.35.73-9.12 2.05L9.12 6.29a1 1 0 0 0-1.41 0L6.29 7.71a1 1 0 0 0 0 1.41l32.59 32.59Zm-22-27.66A17.8 17.8 0 0 1 23 13c12.75 0 17 12 17 12s-1.38 3.9-4.93 7.25l-4.54-4.55A7.99 7.99 0 0 0 23 17c-.95 0-1.86.16-2.7.47l-3.43-3.43ZM1.87 24.67a24.64 24.64 0 0 1 5.8-9.23l2.77 2.78C7.25 21.46 6 25 6 25s4.25 12 17 12a18 18 0 0 0 5.42-.8l3.05 3.05A21.2 21.2 0 0 1 23 41c-9.83 0-17.93-6.63-21.13-15.67a1 1 0 0 1 0-.66Z"></path>
+                                        <path d="M15 25c0-.68.08-1.35.24-1.98l9.74 9.73A8.02 8.02 0 0 1 15 25Z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">ยืนยันรหัสผ่านใหม่</label>
+                            <div style="position: relative; width: 100%;">
+                                <input type="password" id="confirmPassword" 
+                                    style="width: 100%; padding: 8px 35px 8px 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"
+                                    placeholder="ยืนยันรหัสผ่านใหม่">
+                                <button type="button" onclick="togglePasswordVisibility('confirmPassword', 'confirmPasswordIcon')" 
+                                    style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666; width: 20px; height: 20px; padding: 0; margin: 0;">
+                                    <svg id="confirmPasswordIcon" viewBox="0 0 48 48" style="width: 20px; height: 20px; fill: currentColor;">
+                                        <path d="M38.88 41.7a1 1 0 0 0 1.41 0l1.42-1.4a1 1 0 0 0 0-1.42l-3.86-3.86a24.57 24.57 0 0 0 6.27-9.69 1 1 0 0 0 0-.66C41 15.8 32.66 9 23 9c-3.27 0-6.35.73-9.12 2.05L9.12 6.29a1 1 0 0 0-1.41 0L6.29 7.71a1 1 0 0 0 0 1.41l32.59 32.59Zm-22-27.66A17.8 17.8 0 0 1 23 13c12.75 0 17 12 17 12s-1.38 3.9-4.93 7.25l-4.54-4.55A7.99 7.99 0 0 0 23 17c-.95 0-1.86.16-2.7.47l-3.43-3.43ZM1.87 24.67a24.64 24.64 0 0 1 5.8-9.23l2.77 2.78C7.25 21.46 6 25 6 25s4.25 12 17 12a18 18 0 0 0 5.42-.8l3.05 3.05A21.2 21.2 0 0 1 23 41c-9.83 0-17.93-6.63-21.13-15.67a1 1 0 0 1 0-.66Z"></path>
+                                        <path d="M15 25c0-.68.08-1.35.24-1.98l9.74 9.73A8.02 8.02 0 0 1 15 25Z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                            <button onclick="changePassword()" class="btn" style="background: #4CAF50; flex: 1; min-width: 150px;">
+                                🔐 เปลี่ยนรหัสผ่าน
+                            </button>
+                            <button onclick="cancelPasswordChange()" class="btn" style="background: #757575; flex: 1; min-width: 100px;">
+                                ❌ ยกเลิก
+                            </button>
+                            <button onclick="testChangePasswordAPI()" class="btn" style="background: #9C27B0; font-size: 12px; padding: 8px 12px; min-width: 100px;">
+                                🧪 Test API
+                            </button>
+                        </div>
+                        
+                        <p id="passwordChangeMessage" style="margin: 15px 0 0 0; font-size: 14px;"></p>
+                    </div>
+                    
+                    <button onclick="togglePasswordChange()" class="btn" style="padding: 8px 16px; background: #607D8B; width: 100%;">
+                        🔑 เปลี่ยนรหัสผ่าน
+                    </button>
+                </div>
+          
+                <p><strong>เลขกระเป๋า:</strong> <span id="userId" class="wallet-address">Loading...</span></p>
+                <p><strong>Token ID:</strong> <span id="tokenId">Loading...</span></p>
+                <p><strong>สถานะ:</strong> <span style="color: green;">✅ สมาชิก</span></p>
+            </div>
+        </div>
+        
+        <div>
+            <button onclick="logout()" class="btn btn-logout">ล็อกเอ้าท์</button>
+            <a href="/templates/" class="btn" style="background: #1c4162;">กลับหน้าหลัก</a>
+            <a href="/templates/home.html" class="btn" style="background: #4099e7;">เข้าสู่แอ๊พ</a>
+            <a href="/templates/login.html" class="btn" style="background: #566a7b;">ล็อกอินอีกครั้ง</a>
+        </div>
+        
+        <div class="status-box">
+            <p><strong>System Status:</strong> <span id="backendStatus">Checking...</span></p>
+            <p><strong>Session:</strong> <span id="sessionStatus">Checking...</span></p>
+            <p><strong>Environment:</strong> <span id="environment">Detecting...</span></p>
+            <p><strong>Backend URL:</strong> <code id="backendUrl">Detecting...</code></p>
+        </div>
+    </div>
+    
+    <script>
+    // ========== GLOBAL VARIABLES ==========
+    let isEditingName = false;
+
+    // ========== INITIALIZATION ==========
+    console.log('Dashboard loaded');
+
+    // ========== BASIC FUNCTIONS ==========
+    function getBackendUrl() {
+        return window.location.origin;
+    }
+
+    function updateDebugInfo() {
+        document.getElementById('debugDomain').textContent = `Domain: ${window.location.hostname}`;
+        document.getElementById('debugBackendUrl').textContent = `Backend: ${getBackendUrl()}`;
+    }
+
+    function checkAuthentication() {
+        const token = localStorage.getItem('token') || localStorage.getItem('user_token');
+        
+        if (!token) {
+            console.log('No token found, redirecting...');
+            setTimeout(() => {
+                window.location.href = '/templates/login.html';
+            }, 2000);
+            return false;
+        }
+        
+        return true;
+    }
+
+    function loadUserData() {
+        const userData = localStorage.getItem('user') || localStorage.getItem('user_data');
+        
+        console.log('Loading user data from storage:', userData);
+        
+        if (userData) {
+            try {
+                const user = JSON.parse(userData);
+                
+                // Set email
+                document.getElementById('userEmail').textContent = user.email || 'Not set';
+                
+                // Set name
+                document.getElementById('userName').textContent = user.name || 'Not set';
+                
+                // Set wallet address (user_id)
+                document.getElementById('userId').textContent = user.user_id || user.wallet_address || 'Not set';
+                
+                // Set token ID - check multiple possible fields
+                const tokenId = user.token_id || user.tokenId || user.token || 'Not set';
+                document.getElementById('tokenId').textContent = tokenId;
+                
+                console.log('✅ User loaded:', user);
+                console.log('Available fields:', Object.keys(user));
+                
+            } catch (e) {
+                console.error('Error parsing user data:', e);
+                showMessage('Error loading user data', 'error');
+            }
+        } else {
+            showMessage('No user data found.', 'error');
+        }
+    }
+
+    // ========== NAME EDIT FUNCTIONS ==========
+    function toggleNameEdit() {
+        const form = document.getElementById('nameEditForm');
+        const currentName = document.getElementById('userName').textContent;
+        
+        if (isEditingName) {
+            form.style.display = 'none';
+            isEditingName = false;
+        } else {
+            document.getElementById('newNameInput').value = currentName;
+            form.style.display = 'block';
+            isEditingName = true;
+            document.getElementById('nameEditMessage').textContent = '';
+            document.getElementById('newNameInput').focus();
+        }
+    }
+
+    function cancelNameEdit() {
+        document.getElementById('nameEditForm').style.display = 'none';
+        document.getElementById('nameEditMessage').textContent = '';
+        isEditingName = false;
+    }
+
+    async function saveName() {
+        try {
+            const nameInput = document.getElementById('newNameInput');
+            const newName = nameInput.value.trim();
+            
+            if (!newName) {
+                document.getElementById('nameEditMessage').innerHTML = 
+                    '<span style="color: red;">Please enter a name</span>';
+                return;
+            }
+            
+            const token = localStorage.getItem('token') || localStorage.getItem('user_token');
+            
+            if (!token) {
+                alert('Session expired. Please login again.');
+                window.location.href = '/templates/login.html';
+                return;
+            }
+            
+            document.getElementById('nameEditMessage').innerHTML = 
+                '<span style="color: blue;">Updating name...</span>';
+            
+            const backendUrl = getBackendUrl();
+            console.log('Updating name via:', backendUrl + '/api/auth/update-profile');
+            
+            const response = await fetch(`${backendUrl}/api/auth/update-profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name: newName })
+            });
+            
+            console.log('Response status:', response.status);
+            
+            if (response.status === 401) {
+                localStorage.clear();
+                alert('Session expired. Please login again.');
+                window.location.href = '/templates/login.html';
+                return;
+            }
+            
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                document.getElementById('nameEditMessage').innerHTML = 
+                    '<span style="color: green;">✅ Profile updated successfully!</span>';
+                
+                document.getElementById('userName').textContent = newName;
+                
+                // Update localStorage
+                const userData = localStorage.getItem('user') || localStorage.getItem('user_data');
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    user.name = newName;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    localStorage.setItem('user_data', JSON.stringify(user));
+                }
+                
+                setTimeout(() => {
+                    cancelNameEdit();
+                    alert('Name updated successfully!');
+                }, 1500);
+                
+            } else {
+                document.getElementById('nameEditMessage').innerHTML = 
+                    `<span style="color: red;">❌ Error: ${data.message || 'Update failed'}</span>`;
+                console.error('Update failed:', data);
+            }
+            
+        } catch (error) {
+            console.error('Update error:', error);
+            document.getElementById('nameEditMessage').innerHTML = 
+                `<span style="color: red;">❌ Error: ${error.message}</span>`;
+        }
+    }
+
+    // ========== STATUS FUNCTIONS ==========
+    async function testBackendConnection() {
+        try {
+            const response = await fetch(`${getBackendUrl()}/api/auth/health`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('backendStatus').innerHTML = 
+                    `<span class="status-online">✅ Online (${data.service || 'connected'})</span>`;
+                return true;
+            } else {
+                document.getElementById('backendStatus').innerHTML = 
+                    '<span class="status-offline">❌ Offline</span>';
+                return false;
+            }
+        } catch (error) {
+            document.getElementById('backendStatus').innerHTML = 
+                '<span class="status-offline">❌ Connection failed</span>';
+            return false;
+        }
+    }
+
+    async function testTokenValidity() {
+        const token = localStorage.getItem('token') || localStorage.getItem('user_token');
+        
+        if (!token) {
+            document.getElementById('sessionStatus').innerHTML = 
+                '<span class="status-offline">❌ No token</span>';
+            return false;
+        }
+        
+        try {
+            // Try validate-token first
+            let response = await fetch(`${getBackendUrl()}/api/auth/validate-token`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.status === 404) {
+                // Fallback to debug-token
+                response = await fetch(`${getBackendUrl()}/api/auth/debug-token`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            }
+            
+            if (response.ok) {
+                document.getElementById('sessionStatus').innerHTML = 
+                    '<span class="status-online">✅ Valid token</span>';
+                return true;
+            } else {
+                // If endpoints don't exist but token exists, show warning
+                document.getElementById('sessionStatus').innerHTML = 
+                    '<span class="status-offline">⚠️ Token exists (validation endpoint missing)</span>';
+                return false;
+            }
+        } catch (error) {
+            document.getElementById('sessionStatus').innerHTML = 
+                '<span class="status-offline">❌ Validation failed</span>';
+            return false;
+        }
+    }
+
+    // ========== DEBUG FUNCTIONS ==========
+    async function testEndpoints() {
+        console.log('🧪 Testing endpoints...');
+        
+        const endpoints = [
+            '/api/health',
+            '/api/auth/health', 
+            '/api/auth/validate-token',
+            '/api/auth/debug-token'
+        ];
+        
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(getBackendUrl() + endpoint);
+                console.log(`${endpoint}: ${response.status} ${response.statusText}`);
+            } catch (error) {
+                console.error(`${endpoint}:`, error.message);
+            }
+        }
+        
+        alert('Check browser console for test results');
+    }
+
+    function debugToken() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('No token found');
+            return;
+        }
+        
+        console.log('Token (first 50 chars):', token.substring(0, 50) + '...');
+        
+        try {
+            const parts = token.split('.');
+            if (parts.length === 3) {
+                const payload = JSON.parse(atob(parts[1]));
+                console.log('Token payload:', payload);
+                alert(`Token Info:\n\nUser ID: ${payload.userId || 'N/A'}\nEmail: ${payload.email || 'N/A'}`);
+            }
+        } catch (e) {
+            console.error('Error decoding token:', e);
+        }
+    }
+
+    function logout() {
+        if (confirm('Are you sure you want to logout?')) {
+            localStorage.clear();
+            window.location.href = '/templates/login.html';
+        }
+    }
+
+    // ========== INITIALIZE ==========
+    function initializeDashboard() {
+        console.log('Initializing dashboard...');
+        
+        if (!checkAuthentication()) {
+            return;
+        }
+        
+        updateDebugInfo();
+        loadUserData();
+        
+        // Set environment
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        document.getElementById('environment').textContent = isLocalhost ? '🖥️ Local Development' : '🌐 Production';
+        document.getElementById('backendUrl').textContent = getBackendUrl();
+        
+        testBackendConnection();
+        testTokenValidity();
+        
+        console.log('Dashboard initialized');
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeDashboard);
+
+    // ========== PASSWORD CHANGE VARIABLES ==========
+    let isChangingPassword = false;
+
+    // ========== PASSWORD CHANGE FUNCTIONS ==========
+    function togglePasswordChange() {
+        const form = document.getElementById('passwordChangeForm');
+        
+        if (isChangingPassword) {
+            form.style.display = 'none';
+            isChangingPassword = false;
+            clearPasswordFields();
+        } else {
+            form.style.display = 'block';
+            isChangingPassword = true;
+            document.getElementById('passwordChangeMessage').textContent = '';
+            document.getElementById('currentPassword').focus();
+            
+            // Initialize password strength indicator
+            initializePasswordChangeForm();
+        }
+    }
+
+    function cancelPasswordChange() {
+        document.getElementById('passwordChangeForm').style.display = 'none';
+        document.getElementById('passwordChangeMessage').textContent = '';
+        clearPasswordFields();
+        isChangingPassword = false;
+    }
+
+    function clearPasswordFields() {
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+    }
+
+    function togglePasswordVisibility(fieldId) {
+        const field = document.getElementById(fieldId);
+        const button = field.parentElement.querySelector('button');
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            button.innerHTML = '🙈';
+        } else {
+            field.type = 'password';
+            button.innerHTML = '👁️';
+        }
+    }
+
+    // Password strength checker
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        
+        if (password.length >= 8) strength++;
+        if (password.match(/[a-z]+/)) strength++;
+        if (password.match(/[A-Z]+/)) strength++;
+        if (password.match(/[0-9]+/)) strength++;
+        if (password.match(/[$@#&!]+/)) strength++;
+        
+        return Math.min(strength, 4); // Max 4 for CSS classes
+    }
+
+    function addPasswordStrengthIndicator() {
+        const newPasswordField = document.getElementById('newPassword');
+        const parent = newPasswordField.parentElement;
+        
+        // Check if indicator already exists
+        if (!document.getElementById('passwordStrength')) {
+            const strengthDiv = document.createElement('div');
+            strengthDiv.id = 'passwordStrength';
+            strengthDiv.className = 'password-strength';
+            parent.parentElement.appendChild(strengthDiv);
+            
+            const requirementsDiv = document.createElement('div');
+            requirementsDiv.id = 'passwordRequirements';
+            requirementsDiv.className = 'password-requirements';
+            requirementsDiv.innerHTML = `
+                <strong>ข้อกำหนดรหัสผ่าน:</strong>
+                <ul>
+                    <li id="reqLength" class="invalid">อย่างน้อย 8 ตัวอักษร</li>
+                    <li id="reqLower" class="invalid">มีตัวพิมพ์เล็ก</li>
+                    <li id="reqUpper" class="invalid">มีตัวพิมพ์ใหญ่</li>
+                    <li id="reqNumber" class="invalid">มีตัวเลข</li>
+                    <li id="reqSpecial" class="invalid">มีอักขระพิเศษ (!$@#&)</li>
+                </ul>
+            `;
+            parent.parentElement.appendChild(requirementsDiv);
+            
+            // Add event listener for password strength
+            newPasswordField.addEventListener('input', updatePasswordStrength);
+        }
+    }
+
+    function updatePasswordStrength() {
+        const password = document.getElementById('newPassword').value;
+        const strength = checkPasswordStrength(password);
+        const strengthDiv = document.getElementById('passwordStrength');
+        
+        if (strengthDiv) {
+            strengthDiv.className = `password-strength strength-${strength}`;
+        }
+        
+        // Update requirement indicators
+        const requirements = {
+            length: password.length >= 8,
+            lower: /[a-z]/.test(password),
+            upper: /[A-Z]/.test(password),
+            number: /[0-9]/.test(password),
+            special: /[$@#&!]/.test(password)
+        };
+        
+        Object.keys(requirements).forEach((req, index) => {
+            const element = document.getElementById(`req${req.charAt(0).toUpperCase() + req.slice(1)}`);
+            if (element) {
+                element.className = requirements[req] ? 'valid' : 'invalid';
+            }
+        });
+    }
+
+    async function changePassword() {
+        try {
+            const currentPassword = document.getElementById('currentPassword').value.trim();
+            const newPassword = document.getElementById('newPassword').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+            
+            const messageDiv = document.getElementById('passwordChangeMessage');
+            
+            // Clear previous messages
+            messageDiv.innerHTML = '';
+            
+            // Validation
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                messageDiv.innerHTML = '<span style="color: red;">กรุณากรอกข้อมูลให้ครบทุกช่อง</span>';
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                messageDiv.innerHTML = '<span style="color: red;">รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร</span>';
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                messageDiv.innerHTML = '<span style="color: red;">รหัสผ่านใหม่ไม่ตรงกัน</span>';
+                return;
+            }
+            
+            if (currentPassword === newPassword) {
+                messageDiv.innerHTML = '<span style="color: red;">รหัสผ่านใหม่ต้องแตกต่างจากรหัสผ่านปัจจุบัน</span>';
+                return;
+            }
+            
+            // Get token
+            const token = localStorage.getItem('token') || localStorage.getItem('user_token');
+            
+            if (!token) {
+                messageDiv.innerHTML = '<span style="color: red;">❌ ไม่พบโทเคน กรุณาล็อกอินอีกครั้ง</span>';
+                setTimeout(() => {
+                    window.location.href = '/templates/login.html';
+                }, 2000);
+                return;
+            }
+            
+            // Show loading
+            messageDiv.innerHTML = '<span style="color: blue;">🔄 กำลังเปลี่ยนรหัสผ่าน...</span>';
+            
+            // Get backend URL
+            const backendUrl = getBackendUrl();
+            const apiUrl = `${backendUrl}/api/auth/change-password`;
+            console.log('🔐 Changing password via:', apiUrl);
+            console.log('🔐 Token exists:', !!token);
+            
+            // Send change password request
+            // Replace the fetch call with:
+            const response = await safeFetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    currentPassword: currentPassword,
+                    newPassword: newPassword
+                })
+            });
+            
+            console.log('📥 Response status:', response.status);
+            console.log('📥 Response headers:', [...response.headers.entries()]);
+            
+            // Get response text
+            const responseText = await response.text();
+            console.log('📥 Raw response:', responseText.substring(0, 500));
+            
+            // Handle different status codes
+            if (response.status === 401) {
+                // Token expired or invalid
+                messageDiv.innerHTML = '<span style="color: red;">❌ โทเคนหมดอายุ กรุณาล็อกอินอีกครั้ง</span>';
+                localStorage.clear();
+                setTimeout(() => {
+                    window.location.href = '/templates/login.html';
+                }, 2000);
+                return;
+            }
+            
+            if (response.status === 400) {
+                // Bad request (validation error)
+                try {
+                    const data = JSON.parse(responseText);
+                    const errorMsg = data.message || 'ข้อมูลไม่ถูกต้อง';
+                    messageDiv.innerHTML = `<span style="color: red;">❌ ${errorMsg}</span>`;
+                } catch {
+                    messageDiv.innerHTML = '<span style="color: red;">❌ ข้อมูลไม่ถูกต้อง</span>';
+                }
+                return;
+            }
+            
+            if (response.status === 404) {
+                // Endpoint not found
+                messageDiv.innerHTML = '<span style="color: red;">❌ ไม่พบฟังก์ชันเปลี่ยนรหัสผ่านบนเซิร์ฟเวอร์</span>';
+                return;
+            }
+            
+            // Try to parse JSON response
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error('❌ JSON parse error:', parseError);
+                messageDiv.innerHTML = '<span style="color: red;">❌ เซิร์ฟเวอร์ตอบกลับข้อมูลไม่ถูกต้อง</span>';
+                return;
+            }
+            
+            console.log('📥 Response data:', data);
+            
+            if (data.success) {
+                messageDiv.innerHTML = '<span style="color: green;">✅ เปลี่ยนรหัสผ่านสำเร็จ!</span>';
+                
+                // Show success message
+                showMessage('เปลี่ยนรหัสผ่านสำเร็จ!', 'success');
+                
+                // Clear fields and close form
+                setTimeout(() => {
+                    clearPasswordFields();
+                    cancelPasswordChange();
+                    
+                    // Optional: Ask user to login again
+                    if (confirm('เปลี่ยนรหัสผ่านสำเร็จ! ต้องการล็อกอินใหม่ด้วยรหัสผ่านใหม่หรือไม่?')) {
+                        localStorage.clear();
+                        window.location.href = '/templates/login.html';
+                    }
+                }, 1500);
+                
+            } else {
+                const errorMsg = data.message || data.error || 'เปลี่ยนรหัสผ่านไม่สำเร็จ';
+                messageDiv.innerHTML = `<span style="color: red;">❌ ${errorMsg}</span>`;
+                console.error('Change password failed:', data);
+                
+                // Highlight incorrect field
+                if (errorMsg.includes('current password') || errorMsg.includes('รหัสผ่านปัจจุบัน')) {
+                    document.getElementById('currentPassword').focus();
+                    document.getElementById('currentPassword').style.borderColor = '#f44336';
+                }
+            }
+            
+        } catch (error) {
+            console.error('Change password error:', error);
+            document.getElementById('passwordChangeMessage').innerHTML = 
+                `<span style="color: red;">❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: ${error.message}</span>`;
+        }
+    }
+
+    // Helper function to handle fetch errors
+    async function safeFetch(url, options = {}) {
+        try {
+            const response = await fetch(url, options);
+            
+            // Check for network errors
+            if (!response.ok && response.status === 0) {
+                throw new Error('Network error - check internet connection');
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('Fetch error:', error);
+            throw error;
+        }
+    }
+
+    async function testChangePasswordAPI() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('No token found');
+            return;
+        }
+        
+        console.log('Testing change password API...');
+        console.log('Token (first 30 chars):', token.substring(0, 30) + '...');
+        
+        const testData = {
+            currentPassword: 'test123',
+            newPassword: 'newtest123'
+        };
+        
+        try {
+            const response = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(testData)
+            });
+            
+            console.log('Response status:', response.status);
+            console.log('Response headers:', [...response.headers.entries()]);
+            
+            const text = await response.text();
+            console.log('Response text:', text);
+            
+            try {
+                const data = JSON.parse(text);
+                console.log('Parsed response:', data);
+                alert(`Result: ${response.status}\n\n${JSON.stringify(data, null, 2)}`);
+            } catch (e) {
+                console.error('Parse error:', e);
+                alert(`Status: ${response.status}\n\n${text.substring(0, 200)}`);
+            }
+            
+        } catch (error) {
+            console.error('Test error:', error);
+            alert('Error: ' + error.message);
+        }
+    }
+
+    // ========== PASSWORD VISIBILITY TOGGLE ==========
+    function togglePasswordVisibility(fieldId, iconId) {
+        const field = document.getElementById(fieldId);
+        const icon = document.getElementById(iconId);
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            // Switch to visible icon
+            icon.innerHTML = `
+                <path d="M41.4 23.71a.9.9 0 0 1 0 .58c-.63 1.92-2.2 4.89-4.82 7.51A17.35 17.35 0 0 1 24 37.11c-5.42 0-9.55 2.28-12.58 5.3a20.44 20.44 0 0 1-4.82-7.52.9.9 0 0 1 0-.58c.63-1.92 2.2-4.89 4.82-7.51A17.35 17.35 0 0 1 24 10.89c5.42 0 9.55 2.28 12.58 5.3a20.44 20.44 0 0 1 4.82 7.52ZM24 41c13.83 0 20.82-11.7 21.96-16.81a.85.85 0 0 0 0-.38C44.82 18.71 37.83 7 24 7S3.18 18.7 2.04 23.81a.85.85 0 0 0 0 .38C3.18 29.29 10.17 41 24 41Z"></path>
+                <path d="M24 27.21a3.21 3.21 0 1 1 0-6.42 3.21 3.21 0 0 1 0 6.42Zm0 4.29a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15Z"></path>
+            `;
+        } else {
+            field.type = 'password';
+            // Switch to hidden icon
+            icon.innerHTML = `
+                <path d="M38.88 41.7a1 1 0 0 0 1.41 0l1.42-1.4a1 1 0 0 0 0-1.42l-3.86-3.86a24.57 24.57 0 0 0 6.27-9.69 1 1 0 0 0 0-.66C41 15.8 32.66 9 23 9c-3.27 0-6.35.73-9.12 2.05L9.12 6.29a1 1 0 0 0-1.41 0L6.29 7.71a1 1 0 0 0 0 1.41l32.59 32.59Zm-22-27.66A17.8 17.8 0 0 1 23 13c12.75 0 17 12 17 12s-1.38 3.9-4.93 7.25l-4.54-4.55A7.99 7.99 0 0 0 23 17c-.95 0-1.86.16-2.7.47l-3.43-3.43ZM1.87 24.67a24.64 24.64 0 0 1 5.8-9.23l2.77 2.78C7.25 21.46 6 25 6 25s4.25 12 17 12a18 18 0 0 0 5.42-.8l3.05 3.05A21.2 21.2 0 0 1 23 41c-9.83 0-17.93-6.63-21.13-15.67a1 1 0 0 1 0-.66Z"></path>
+                <path d="M15 25c0-.68.08-1.35.24-1.98l9.74 9.73A8.02 8.02 0 0 1 15 25Z"></path>
+            `;
+        }
+    }
+
+    // ========== PASSWORD STRENGTH INDICATOR ==========
+    function addPasswordStrengthIndicator() {
+        const newPasswordField = document.getElementById('newPassword');
+        
+        // Create strength indicator if not exists
+        if (!document.getElementById('passwordStrength')) {
+            const strengthDiv = document.createElement('div');
+            strengthDiv.id = 'passwordStrength';
+            strengthDiv.className = 'password-strength strength-0';
+            newPasswordField.parentElement.parentElement.appendChild(strengthDiv);
+        }
+        
+        // Add input event listener
+        newPasswordField.addEventListener('input', updatePasswordStrength);
+    }
+
+    function updatePasswordStrength() {
+        const password = document.getElementById('newPassword').value;
+        const strength = checkPasswordStrength(password);
+        const strengthDiv = document.getElementById('passwordStrength');
+        
+        if (strengthDiv) {
+            strengthDiv.className = `password-strength strength-${strength}`;
+        }
+    }
+
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        
+        if (password.length >= 8) strength++;
+        if (password.match(/[a-z]+/)) strength++;
+        if (password.match(/[A-Z]+/)) strength++;
+        if (password.match(/[0-9]+/)) strength++;
+        if (password.match(/[$@#&!]+/)) strength++;
+        
+        return Math.min(strength, 4);
+    }
+
+    // ========== TEST API FUNCTION ==========
+    async function testChangePasswordAPI() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('❌ No token found');
+            return;
+        }
+        
+        const currentPassword = document.getElementById('currentPassword').value.trim();
+        const newPassword = document.getElementById('newPassword').value.trim();
+        
+        if (!currentPassword || !newPassword) {
+            alert('❌ Please fill in both current and new password fields');
+            return;
+        }
+        
+        console.log('🧪 Testing change password API...');
+        console.log('Token (first 30 chars):', token.substring(0, 30) + '...');
+        
+        const testData = {
+            currentPassword: currentPassword,
+            newPassword: newPassword
+        };
+        
+        try {
+            const response = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(testData)
+            });
+            
+            console.log('Response status:', response.status);
+            console.log('Response headers:', [...response.headers.entries()]);
+            
+            const text = await response.text();
+            console.log('Response text:', text);
+            
+            try {
+                const data = JSON.parse(text);
+                console.log('Parsed response:', data);
+                alert(`Result: ${response.status}\n\n${JSON.stringify(data, null, 2)}`);
+            } catch (e) {
+                console.error('Parse error:', e);
+                alert(`Status: ${response.status}\n\n${text.substring(0, 200)}`);
+            }
+            
+        } catch (error) {
+            console.error('Test error:', error);
+            alert('❌ Error: ' + error.message);
+        }
+    }
+
+    // ========== INITIALIZE PASSWORD CHANGE FORM ==========
+    // Call this when showing the password change form
+    function initializePasswordChangeForm() {
+        addPasswordStrengthIndicator();
+        
+        // Add padding to input fields for icons
+        const passwordFields = ['currentPassword', 'newPassword', 'confirmPassword'];
+        passwordFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.style.paddingRight = '40px';
+            }
+        });
+    }
+
+    // Add to your existing showMessage function or create one
+    function showMessage(message, type = 'info') {
+        const colors = {
+            'success': '#4CAF50',
+            'error': '#f44336',
+            'info': '#2196F3',
+            'warning': '#ff9800'
+        };
+        
+        console.log(`${type.toUpperCase()}: ${message}`);
+        
+        // Create toast notification
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: ${colors[type] || '#2196F3'};
+            color: white;
+            border-radius: 8px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-width: 400px;
+            word-break: break-word;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        // Remove after 4 seconds
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+    </script>
+</body>
+</html>
