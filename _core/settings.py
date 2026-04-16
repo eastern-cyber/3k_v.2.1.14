@@ -210,12 +210,3 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/' 
 ACCOUNT_LOGIN_METHODS = {'username', 'email'}
 ACCOUNT_FORMS = {'signup': 'a_users.forms.CustomSignupForm'}
-
-import sys
-if 'collectstatic' in sys.argv or 'migrate' in sys.argv:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': ':memory:',
-        }
-    }
